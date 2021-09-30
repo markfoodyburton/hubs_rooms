@@ -1,0 +1,119 @@
+# exports each selected object into its own file
+
+import bpy
+import os
+from mathutils import Color
+
+import random
+
+# export to blend file location
+basedir = os.path.dirname(bpy.data.filepath)+"/avatar_gen"
+basename = bpy.path.clean_name(bpy.path.display_name(bpy.context.blend_data.filepath))
+print("Base name : ", basename)
+
+if not basedir:
+    raise Exception("Blend file is not saved")
+
+view_layer = bpy.context.view_layer
+
+
+skins=[
+(0.63, 0.25, 0.14, 1),
+(0.26, 0.19, 0.17, 1),
+(0.15, 0.11, 0.10, 1),
+(0.47, 0.25, 0.13, 1),
+(0.67, 0.48, 0.32, 1)]
+
+cloths=[
+(0.40, 0.06, 0.03, 1),
+(0.40, 0.29, 0.03, 1),
+(0.82, 0.84, 0.18, 1),
+(0.15, 0.44, 0.02, 1),
+(0.06, 0.44, 0.31, 1),
+(0.00, 0.00, 0.43, 1),
+(0.33, 0.00, 0.42, 1),
+(0.72, 0.72, 0.72, 1),
+(0.22, 0.22, 0.22, 1),
+(0.05, 0.05, 0.13, 1)]
+
+hairs=[
+(0.19, 0.17, 0.17, 1),
+(0.32, 0.24, 0.19, 1),
+(0.34, 0.09, 0.07, 1),
+(0.84, 0.62, 0.39, 1),
+(0.68, 0.64, 0.62, 1)]
+
+segs=[
+(1,0,0,1),
+(0,1,0,1),
+(0,0,1,1)
+]
+
+i=0
+random.seed()
+
+ways=[]
+for skin in skins:
+  for cloth_t in cloths:
+    for cloth_b in cloths:
+        for hair in hairs:
+            for seg in segs:
+                ways.append([skin,cloth_t,cloth_b,hair,seg])
+ways=random.sample(ways,10)       
+for way in ways:
+    skin=way[0]
+    cloth_t=way[1]
+    cloth_b=way[2]
+    hair=way[3]
+    seg=way[4]
+    
+    obj = bpy.data.objects["Wolf3D_Body"]
+    material = obj.material_slots[0].material
+    nodes = material.node_tree.nodes
+    principled = next(n for n in nodes if n.type == 'BSDF_PRINCIPLED')
+    principled.inputs['Base Color'].default_value =  skin
+
+    obj = bpy.data.objects["Wolf3D_Head"]
+    material = obj.material_slots[0].material
+    nodes = material.node_tree.nodes
+    principled = next(n for n in nodes if n.type == 'BSDF_PRINCIPLED')
+    principled.inputs['Base Color'].default_value =  skin
+
+    obj = bpy.data.objects["Wolf3D_Hair"]
+    material = obj.material_slots[0].material
+    nodes = material.node_tree.nodes
+    principled = next(n for n in nodes if n.type == 'BSDF_PRINCIPLED')
+    principled.inputs['Base Color'].default_value =  hair
+    
+    obj = bpy.data.objects["Wolf3D_Outfit_Top"]
+    material = obj.material_slots[0].material
+    nodes = material.node_tree.nodes
+    principled = next(n for n in nodes if n.type == 'BSDF_PRINCIPLED')
+    principled.inputs['Base Color'].default_value =  cloth_t
+    
+    obj = bpy.data.objects["Wolf3D_Outfit_Bottom"]
+    material = obj.material_slots[0].material
+    nodes = material.node_tree.nodes
+    principled = next(n for n in nodes if n.type == 'BSDF_PRINCIPLED')
+    principled.inputs['Base Color'].default_value =  cloth_b
+
+
+    obj = bpy.data.objects["pasted__pCylinder30_lambert1_0.002"]
+    material = obj.material_slots[0].material
+    nodes = material.node_tree.nodes
+    principled = next(n for n in nodes if n.type == 'BSDF_PRINCIPLED')
+    principled.inputs['Base Color'].default_value =  seg
+
+    bpy.ops.object.select_all(action='SELECT')
+    fn = os.path.join(basedir, basename) + "_gen_" + str(i) + ".glb"
+    bpy.ops.export_scene.gltf(filepath=fn, use_selection=True)
+
+    i=i+1
+ 
+    print("written:", fn)
+
+
+#view_layer.objects.active = obj_active
+
+#for obj in selection:
+#    obj.select_set(True)
